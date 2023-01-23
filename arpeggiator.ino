@@ -97,7 +97,9 @@ void useArpToggle(bool use){
 }
 
 void arpAllOff(){  //also a general reset of arpeggiator
+
   for(int i=0; i<PATTERN_LENGTH; i++){ // clear the note order array
+
     noteOrder[i] = 0;
     patternOrder[i] = 0;
     noteSequential[i] = 0;
@@ -180,7 +182,7 @@ inline void addNoteSeq(uint8_t note){
   }
   Serial.println();
   //if there was no space left write a message that buffer is full
-  #ifdef DISPLAY_1306
+  #ifdef DISPLAY_ST7735
   if(!insertionDone)
     miniScreenString(6,1,"FULL-B",HIGH);
   

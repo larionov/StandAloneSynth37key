@@ -90,9 +90,9 @@ struct midiControllerMapping tigerMapping[] =
     { 0x2, 0x10, "R3", NULL, Synth_SetParam, SYNTH_PARAM_VEL_ENV_SUSTAIN},                      //Delay_SetLength, 2
     { 0x3, 0x10, "R4", NULL, Synth_SetParam, SYNTH_PARAM_VEL_ENV_RELEASE},                       //Delay_SetLevel, 3    //Delay_SetFeedback, 4
 
-    { 0x4, 0x10, "R5", NULL, Synth_SetParam, SYNTH_PARAM_FIL_ENV_ATTACK},
-    { 0x5, 0x10, "R6", NULL, Synth_SetParam, SYNTH_PARAM_FIL_ENV_DECAY},
-    { 0x6, 0x10, "R7", NULL, Synth_SetParam, SYNTH_PARAM_FIL_ENV_SUSTAIN},
+   { 0x5, 0x10, "R6", NULL, Synth_SetParam, SYNTH_PARAM_FIL_ENV_DECAY},
+  { 0x4, 0x10, "R5", NULL, Synth_SetParam, SYNTH_PARAM_FIL_ENV_ATTACK},
+       { 0x6, 0x10, "R7", NULL, Synth_SetParam, SYNTH_PARAM_FIL_ENV_SUSTAIN},
     { 0x7, 0x10, "R8", NULL, Synth_SetParam, SYNTH_PARAM_FIL_ENV_RELEASE},
 
     { 0x0, 0x12, "R9", NULL, Delay_SetLength, 2},
@@ -112,21 +112,21 @@ struct midiMapping_s midiMapping =
 };
 
 
-struct usbMidiMappingEntry_s usbMidiMappingEntries[] =
-{
-    {
-        NULL,
-        Midi_SendShortMessage,
-        NULL,
-        NULL,
-        0x01,
-    },
-};
+// struct usbMidiMappingEntry_s usbMidiMappingEntries[] =
+// {
+//     {
+//         NULL,
+//         Midi_SendShortMessage,
+//         NULL,
+//         NULL,
+//         0x01,
+//     },
+// };
 
-struct usbMidiMapping_s usbMidiMapping =
-{
-    NULL,      //NULL
-    NULL,      //NULL
-    usbMidiMappingEntries,
-    sizeof(usbMidiMappingEntries) / sizeof(usbMidiMappingEntries[0]),
-};
+// struct usbMidiMapping_s usbMidiMapping =
+// {
+//     NULL,      //NULL
+//     NULL,      //NULL
+//     usbMidiMappingEntries,
+//     sizeof(usbMidiMappingEntries) / sizeof(usbMidiMappingEntries[0]),
+// };

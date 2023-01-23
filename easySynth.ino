@@ -590,6 +590,8 @@ inline void Filter_Reset(struct filterProcT *filter)
 
 inline void Synth_NoteOn(uint8_t ch, uint8_t note, float vel)
 {
+
+    Serial.printf("note on: %d %d %f\n", ch, note, vel);
     struct notePlayerT *voice = getFreeVoice();
     struct oscillatorT *osc = getFreeOsc();
 
@@ -600,7 +602,7 @@ inline void Synth_NoteOn(uint8_t ch, uint8_t note, float vel)
     {
         miniScreenString(7,1,"-no voice-",HIGH);
 
-        //Serial.printf("voc: %d, osc: %d\n", voc_act, osc_act);
+        Serial.printf("err: voc: %d, osc: %d\n", voc_act, osc_act);
         return ;
     }
 
@@ -733,6 +735,8 @@ inline void Synth_NoteOn(uint8_t ch, uint8_t note, float vel)
 
 inline void Synth_NoteOff(uint8_t ch, uint8_t note)
 {
+  
+    Serial.printf("note Off: %d %d\n", ch, note);
     for (int i = 0; i < MAX_POLY_VOICE ; i++)
     {
         if ((voicePlayer[i].active) && (voicePlayer[i].midiNote == note))
