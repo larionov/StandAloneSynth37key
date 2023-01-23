@@ -179,9 +179,9 @@ inline void HandleShortMsg(uint8_t *data)
 void Midi_Setup()
 {
 #ifdef TXD2
-    Serial2.begin(31250, SERIAL_8N1, RXD2, TXD2);
+    //Serial2.begin(31250, SERIAL_8N1, RXD2, TXD2);
 #else
-    Serial2.begin(31250, SERIAL_8N1, RXD2);
+    //Serial2.begin(31250, SERIAL_8N1, RXD2);
 #endif
     pinMode(RXD2, INPUT_PULLUP);  /* 25: GPIO 16, u2_RXD */
 }
@@ -197,45 +197,45 @@ void Midi_CheckSerial2(void)
 
     //Choose Serial1 or Serial2 as required
 
-    if (Serial2.available())
-    {
-        uint8_t incomingByte = Serial2.read();
+//     if (0 /*Serial2.available()*/)
+//     {
+//         uint8_t incomingByte = Serial2.read();
 
-#ifdef DUMP_SERIAL2_TO_SERIAL
-        Serial.printf("%02x", incomingByte);
-#endif
-        /* ignore live messages */
-        if ((incomingByte & 0xF0) == 0xF0)
-        {
-            return;
-        }
+// #ifdef DUMP_SERIAL2_TO_SERIAL
+//         Serial.printf("%02x", incomingByte);
+// #endif
+//         /* ignore live messages */
+//         if ((incomingByte & 0xF0) == 0xF0)
+//         {
+//             return;
+//         }
 
-        if (inMsgIndex == 0)
-        {
-            if ((incomingByte & 0x80) != 0x80)
-            {
-                inMsgIndex = 1;
-            }
-        }
+//         if (inMsgIndex == 0)
+//         {
+//             if ((incomingByte & 0x80) != 0x80)
+//             {
+//                 inMsgIndex = 1;
+//             }
+//         }
 
-        inMsg[inMsgIndex] = incomingByte;
-        inMsgIndex += 1;
+//         inMsg[inMsgIndex] = incomingByte;
+//         inMsgIndex += 1;
 
-        if (inMsgIndex >= 3)
-        {
-#ifdef DUMP_SERIAL2_TO_SERIAL
-            Serial.printf(">%02x %02x %02x\n", inMsg[0], inMsg[1], inMsg[2]);
-#endif
-            HandleShortMsg(inMsg);
-            inMsgIndex = 0;
-        }
+//         if (inMsgIndex >= 3)
+//         {
+// #ifdef DUMP_SERIAL2_TO_SERIAL
+//             Serial.printf(">%02x %02x %02x\n", inMsg[0], inMsg[1], inMsg[2]);
+// #endif
+//             HandleShortMsg(inMsg);
+//             inMsgIndex = 0;
+//         }
 
-        /*
-         * reset watchdog to allow new bytes to be received
-         */
-        inMsgWd = 0;
-    }
-    else
+//         /*
+//          * reset watchdog to allow new bytes to be received
+//          */
+//         inMsgWd = 0;
+//     }
+//     else
     {
         if (inMsgIndex > 0)
         {
@@ -318,5 +318,5 @@ void Midi_Process()
 
 void Midi_SendShortMessage(uint8_t *msg)
 {
-    Serial2.write(msg, 3);
+    // Serial2.write(msg, 3);
 }

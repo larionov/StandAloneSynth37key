@@ -14,14 +14,18 @@
 
 //#define ESP32_AUDIO_KIT
 //#define INTERNAL_DAC 
+//#define I2S_NODAC
 //defaults to some kind of external DAC probably of the PCM5102A Breakout board variety
 #define extraButtons  //(additional buttons to be serviced direct to board)
 //#define MIDI_VIA_USB_ENABLED
-#define DISPLAY_1306
+//#define DISPLAY_1306
+#define DISPLAY_ST7735
 #define USE_MODIFIER_KEYCOMMANDS
 /* this will force using const velocity for all notes, remove this to get dynamic velocity */
-//#define MIDI_USE_CONST_VELOCITY
-
+#define MIDI_USE_CONST_VELOCITY
+//#define ButtonsKeyboard
+#define ButtonsMulKeyboard
+//#define MC17Keyboard
 #ifdef ESP32_AUDIO_KIT
 
 /* on board led */
@@ -36,14 +40,14 @@
 #else /* ESP32_AUDIO_KIT */
 
 /* on board led */
-#define LED_PIN     12
+#define LED_PIN     8
 
 /*
  * Define and connect your PINS to DAC here
  */
 
 #ifdef I2S_NODAC
-#define I2S_NODAC_OUT_PIN   22  /* noisy sound without DAC, add capacitor in series! */
+#define I2S_NODAC_OUT_PIN   14  /* noisy sound without DAC, add capacitor in series! */
 #endif
 #ifdef INTERNAL_DAC
 #define I2S_BCLK_PIN    26   //lets assume this is for the PCM5102A on 32 bit mode
@@ -54,27 +58,27 @@
  * pins to connect a real DAC like PCM5201
  */
 
-#define I2S_BCLK_PIN    25    //purple  bck
-#define I2S_WCLK_PIN    27    //purple0    lck
-#define I2S_DOUT_PIN    26    //green   din                                    
+#define I2S_BCLK_PIN    16    //purple  bck
+#define I2S_WCLK_PIN    17    //purple0    lck
+#define I2S_DOUT_PIN    14    //green   din                                    
 
 
 #endif
 // Michael's added simple ADC related parts 
-#define  ADC_DIRECT_TL   39 // top left pot directly wired to ESP32 analogue GPIO 35, 34, 39, 36 
-#define  ADC_DIRECT_TR   34 //top right
-#define  ADC_DIRECT_BL   35 //bottom left
-#define  ADC_DIRECT_BR   36 //bottom right
-#define  ADC_FADER_ONE   15 // only one
+#define  ADC_DIRECT_TL   34 // top left pot directly wired to ESP32 analogue GPIO 35, 34, 39, 36 
+#define  ADC_DIRECT_TR   13 //top right
+#define  ADC_DIRECT_BL   12 //bottom left
+#define  ADC_DIRECT_BR   44 //bottom right
+#define  ADC_FADER_ONE   43 // only one
 
 //This code is half relevant but initializing the ADC calls in here is 
 //1) Incompatible with the device libraries beyond 1.0.4 after which they changed the ADC calls for ESP on arduino
 //2) I'm not using the ADC multiplexer at this standalone device - trying to maximize the efficiency of a single ESP32
-#define ADC_INPUTS  8
-#define ADC_MUL_S0_PIN  33
-#define ADC_MUL_S1_PIN  32
-#define ADC_MUL_S2_PIN  13
-#define ADC_MUL_SIG_PIN 2
+// #define ADC_INPUTS  8
+// #define ADC_MUL_S0_PIN  39
+// #define ADC_MUL_S1_PIN  40
+// #define ADC_MUL_S2_PIN  41
+// #define ADC_MUL_SIG_PIN 2
 
 #endif /* ESP32_AUDIO_KIT */
 

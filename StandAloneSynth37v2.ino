@@ -23,15 +23,14 @@ void setup()
 {
     /*
      * this code runs once
-     */
-    delay(500);
-
-    Serial.begin(115200);
-
-    Serial.println();
+     */  
+     Serial.begin(115200);
 
     Delay_Init();
-
+    
+#ifdef DISPLAY_ST7735
+    setupst7735();
+#endif
     Serial.printf("Initialize Synth Module\n");
     Synth_Init();
     Serial.printf("Initialize I2S Module\n");
@@ -78,15 +77,14 @@ void setup()
     Serial.printf("Firmware started successfully\n");
 
 
-#if 0 /* activate this line to get a tone on startup to test the DAC */
+/* activate this line to get a tone on startup to test the DAC */
     //Synth_NoteOn(0, 64, 1.0f);
-#endif
-   
 
 #if (defined ADC_TO_MIDI_ENABLED) || (defined MIDI_VIA_USB_ENABLED)
     xTaskCreatePinnedToCore(Core0Task, "Core0Task", 8000, NULL, 999, &Core0TaskHnd, 0);
     Serial.println("Setup Pin To Core 0 loop");
 #endif
+
 }
 
 
@@ -95,9 +93,6 @@ void Core0TaskSetup()
     /*
      * init your stuff for core0 here
      */
-   #ifdef DISPLAY_1306
-   setup1306(); //display first before buttons and pots because they call to write to screen
-   #endif
    setupKeyboard();
    //setupADC_MINMAX();
    setupButtons();
@@ -114,6 +109,7 @@ void Core0TaskSetup()
 
 void Core0TaskLoop()
 {
+  //Serial.println('loop');
     /*
      * put your loop stuff for core0 here
      */
@@ -121,25 +117,27 @@ void Core0TaskLoop()
     //AdcMul_Process();
   #endif
    readSimplePots();
-   #ifdef DISPLAY_1306
-    displayRefresh();
-   #endif
   
    processButtons();
    
    serviceKeyboardMatrix();
+
+  #ifdef DISPLAY_ST7735
+    displayRefresh();
+  #endif
 }
 
 void Core0Task(void *parameter)
 {
     
     Core0TaskSetup();
-    //Serial.print("Core0 Setup- confirm core:");
-    //Serial.println(xPortGetCoreID());
+    Serial.print("Core0 Setup- confirm core:");
+    Serial.println(xPortGetCoreID());
     while (true)
     {
         Core0TaskLoop();
        
+
         delay(1);
         yield();
     }
@@ -170,6 +168,7 @@ float fl_sample, fr_sample;
 
 void loop()
 {
+
     static uint32_t loop_cnt_1beat;
     static uint32_t loop_cnt_1note;
     static uint8_t loop_count_u8 = 0;
@@ -179,6 +178,7 @@ void loop()
     loop_cnt_1beat++;  // related to tempo or bpm
     loop_cnt_1note++;  // related to divisions per beat or notes triggered by arpeggiator module
     
+    //Serial.printf("loop_count_u8: %d, loop_cnt_1beat: %d, loop_cnt_1note: %d\n", loop_count_u8, loop_cnt_1beat, loop_cnt_1note);
     if (loop_cnt_1beat >= beatcycles) // trigger beat - originally for 1hz blink process - now blink light when arpeggiator is on at tempo
     {
 
@@ -202,14 +202,15 @@ void loop()
     }
     
 #ifdef I2S_NODAC
-    if (writeDAC(l_sample))
+    if (writeDAC(fl_sample))
     {
-        l_sample = Synth_Process();
+        fl_sample = Synth_Process();
     }
 #else
 
     if (i2s_write_stereo_samples(&fl_sample, &fr_sample))
     {
+      //Serial.printf("i2s_Write %f, %f\n", fl_sample, fr_sample);
         /* nothing for here */
     }
     Synth_Process(&fl_sample, &fr_sample);
@@ -242,10 +243,11 @@ void loop()
         #ifdef MIDI_VIA_USB_ENABLED
        UsbMidi_Loop();
        #endif
-       #ifdef DISPLAY_1306
+       #ifdef DISPLAY_ST7735
          //testanimate(logo_bmp, LOGO_WIDTH, LOGO_HEIGHT);
        #endif
     } 
+
 }
 
     

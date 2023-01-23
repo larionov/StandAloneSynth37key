@@ -4,7 +4,7 @@
  * Author: Marcel Licence
  */
 
-#include <driver/i2s.h>
+#include <I2S.h>
 
 /*
  * no dac not tested within this code
@@ -13,70 +13,12 @@
 //#define I2S_NODAC
 
 
-
-const i2s_port_t i2s_num = I2S_NUM_0; // i2s port number
-
-#ifdef I2S_NODAC
-
-bool writeDAC(float DAC_f);
-bool i2s_write_sample(uint32_t sample);
-
-bool i2s_write_sample(uint32_t sample)
-{
-    static size_t bytes_written = 0;
-    i2s_write((i2s_port_t)i2s_num, (const char *)&sample, 4, &bytes_written, portMAX_DELAY);
-
-    if (bytes_written > 0)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
+namespace esp_i2s {
+  #include "driver/i2s.h" // ESP specific i2s driver
 }
 
-static uint32_t i2sACC;
-static uint16_t err;
 
-bool i2s_write_stereo_samples(float *fl_sample, float *fr_sample)
-{
-    uint16_t DAC = 0x8000 + int16_t(*fl_sample * 32767.0f);
-    for (uint8_t i = 0; i < 32; i++)
-    {
-        i2sACC = i2sACC << 1;
-        if (DAC >= err)
-        {
-            i2sACC |= 1;
-            err += 0xFFFF - DAC;
-        }
-        else
-        {
-            err -= DAC;
-        }
-    }
-    bool ret = i2s_write_sample(i2sACC);
-
-    return ret;
-}
-
-#else
-
-bool i2s_write_sample_32ch2(uint64_t sample)
-{
-    static size_t bytes_written = 0;
-    i2s_write((i2s_port_t)i2s_num, (const char *)&sample, 8, &bytes_written, portMAX_DELAY);
-
-    if (bytes_written > 0)
-    {
-        return true;
-    }
-    else
-    {
-        return false;
-    }
-}
-
+const esp_i2s::i2s_port_t i2s_num = esp_i2s::I2S_NUM_0; // i2s port number
 
 bool i2s_write_stereo_samples(float *fl_sample, float *fr_sample)
 {
@@ -134,17 +76,24 @@ bool i2s_write_stereo_samples(float *fl_sample, float *fr_sample)
     static size_t bytes_written = 0;
     static size_t bytes_read = 0;
 
+
+    bytes_written = I2S.write_nonblocking((const char *)&sampleDataU.sample, 4);
+    //bytes_written = I2S.write_nonblocking((const char *)&sampleDataU.sample, 2);
+    //bytes_written += I2S.write(sampleDataU.ch[1]);
+  esp_err_t err;
 #ifdef SAMPLE_SIZE_8BIT
-    i2s_write(i2s_num, (const char *)&sampleDataU.sample, 2, &bytes_written, portMAX_DELAY);
+    //err = esp_i2s::i2s_write(i2s_num, (const char *)&sampleDataU.sample, 2, &bytes_written, portMAX_DELAY);
 #endif
 
 #ifdef SAMPLE_SIZE_16BIT
-    i2s_write(i2s_num, (const char *)&sampleDataU.sample, 4, &bytes_written, portMAX_DELAY);
+    //err = esp_i2s::i2s_write(i2s_num, (const char *)&sampleDataU.sample, 4, &bytes_written, portMAX_DELAY);
 #endif
 #ifdef SAMPLE_SIZE_32BIT
-    i2s_write(i2s_num, (const char *)&sampleDataU.sample, 8, &bytes_written, portMAX_DELAY);
+  //err = esp_i2s::i2s_write(i2s_num, (const char *)&sampleDataU.sample, 8, &bytes_written, portMAX_DELAY);
 #endif
 
+    //if (sampleDataU.sample > 0) Serial.println("i2s_write_stereo_samples: " + String(sampleDataU.sample));
+    
     if (bytes_written > 0)
     {
         return true;
@@ -155,71 +104,80 @@ bool i2s_write_stereo_samples(float *fl_sample, float *fr_sample)
     }
 }
 
-
-#endif
-
-
 /*
  * i2s configuration
  */
 
-i2s_config_t i2s_config =
-{
-    .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX ),
-    .sample_rate = SAMPLE_RATE,
-#ifdef I2S_NODAC
-    .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
-    .channel_format = I2S_CHANNEL_FMT_ONLY_LEFT,
-    .communication_format = (i2s_comm_format_t)I2S_COMM_FORMAT_I2S_MSB,
-#else
-#ifdef SAMPLE_SIZE_8BIT
-    .bits_per_sample = I2S_BITS_PER_SAMPLE_8BIT,
-#endif
-#ifdef SAMPLE_SIZE_16BIT
-    .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
-#endif
-#ifdef SAMPLE_SIZE_32BIT
-    .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
-#endif
-    .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
-    .communication_format = (i2s_comm_format_t)(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
-#endif
-    .intr_alloc_flags = 0,
-    .dma_buf_count = 8,
-    .dma_buf_len = 64,
-    .use_apll = 0
-};
+// i2s_config_t i2s_config =
+// {
+//     .mode = (i2s_mode_t)(I2S_MODE_MASTER | I2S_MODE_TX ),
+//     .sample_rate = SAMPLE_RATE,
+
+// #ifdef SAMPLE_SIZE_8BIT
+//     .bits_per_sample = I2S_BITS_PER_SAMPLE_8BIT,
+// #endif
+// #ifdef SAMPLE_SIZE_16BIT
+//     .bits_per_sample = I2S_BITS_PER_SAMPLE_16BIT,
+// #endif
+// #ifdef SAMPLE_SIZE_32BIT
+//     .bits_per_sample = I2S_BITS_PER_SAMPLE_32BIT,
+// #endif
+//     .channel_format = I2S_CHANNEL_FMT_RIGHT_LEFT,
+//     //.communication_format = (i2s_comm_format_t)(I2S_COMM_FORMAT_I2S | I2S_COMM_FORMAT_I2S_MSB),
+//     .communication_format = I2S_COMM_FORMAT_STAND_I2S,
+//     .intr_alloc_flags = 0,
+//     .dma_buf_count = 8,
+//     .dma_buf_len = 64,
+//     .use_apll = 0
+// };
 
 
 
-i2s_pin_config_t pins =
-{
-#ifdef ESP32_AUDIO_KIT
-    .bck_io_num = IIS_SCLK,
-    .ws_io_num =  IIS_LCLK,
-    .data_out_num = IIS_DSIN,
-    .data_in_num = IIS_DSOUT
-#else
-    .bck_io_num = I2S_BCLK_PIN,
-    .ws_io_num =  I2S_WCLK_PIN,
-    .data_out_num = I2S_DOUT_PIN,
-    .data_in_num = I2S_PIN_NO_CHANGE
-#endif
-};
+// i2s_pin_config_t pins =
+// {
+// #ifdef ESP32_AUDIO_KIT
+//     .bck_io_num = IIS_SCLK,
+//     .ws_io_num =  IIS_LCLK,
+//     .data_out_num = IIS_DSIN,
+//     .data_in_num = IIS_DSOUT
+// #else
+//     .bck_io_num = I2S_BCLK_PIN,
+//     .ws_io_num =  I2S_WCLK_PIN,
+//     .data_out_num = I2S_DOUT_PIN,
+//     .data_in_num = I2S_PIN_NO_CHANGE
+// #endif
+// };
 
 
 
 void setup_i2s()
 {
-    #ifdef INTERNAL_DAC  
-    i2s_driver_install(i2s_num, &i2s_config, 4, NULL); //&m_i2sQueue
-    i2s_set_dac_mode(I2S_DAC_CHANNEL_BOTH_EN);
-    #else
-    i2s_driver_install(i2s_num, &i2s_config, 0, NULL);
-    #endif
-    //Serial.printf(">%02 %02 %02\n", pins.bck_io_num,pins.ws_io_num,pins.data_out_num);
-    Serial.println("pin info"+String(pins.bck_io_num)+" "+String(pins.ws_io_num)+" "+String(pins.data_out_num));
-    i2s_set_pin(I2S_NUM_0, &pins);
-    i2s_set_sample_rates(i2s_num, SAMPLE_RATE);
-    i2s_start(i2s_num);
+
+  I2S.setDataOutPin(14); // din
+  //I2S.setDataInPin(14); // din
+  I2S.setDataPin(14); // din
+  I2S.setFsPin(17); // lck
+  I2S.setSckPin(16); // bck
+  ///start I2S at the sample rate with 16-bits per sample
+  if (!I2S.begin(I2S_PHILIPS_MODE, SAMPLE_RATE, 16)) {
+    Serial.println("Failed to initialize I2S!");
+    while (1); // do nothing
+  }
+
+    // esp_err_t err = ESP_OK;
+    // // #ifdef INTERNAL_DAC  
+    // // i2s_driver_install(i2s_num, &i2s_config, 4, NULL); //&m_i2sQueue
+    // // i2s_set_dac_mode(I2S_DAC_CHANNEL_BOTH_EN);
+    // // #else
+    // err = i2s_driver_install(i2s_num, &i2s_config, 0, NULL);
+    // Serial.println("i2s_driver_install: " + String(err));
+    // // #endif
+    // //Serial.printf(">%02 %02 %02\n", pins.bck_io_num,pins.ws_io_num,pins.data_out_num);
+    // Serial.println("pin info"+String(pins.bck_io_num)+" "+String(pins.ws_io_num)+" "+String(pins.data_out_num));
+    // err = i2s_set_pin(I2S_NUM_0, &pins);
+    // Serial.println("i2s_set_pin: " + String(err));
+    // err = i2s_set_sample_rates(i2s_num, SAMPLE_RATE);
+    // Serial.println("i2s_set_sample_rates: " + String(err));
+    // err = i2s_start(i2s_num);
+    // Serial.println("i2s_start: " + String(err));
 }

@@ -67,7 +67,7 @@
 
 
 #ifdef extraButtons
-#define bankButton 13 // for use with a single POT to select which parameter
+#define bankButton 4 // for use with a single POT to select which parameter
 #define downButton 4 // ditto
 #else
 #define bankButton LED_PIN // if not in use just define something else and keep pins free
@@ -147,14 +147,21 @@ uint8_t checkBankValue(){  //this is now called by the blink module because it d
 // Originally I uses the bank button to rotate through but as I developed more functionality I made the bankButton a
 // modifier key - then keys on the keyboard can bring on banks
 void screenLabelPotBank(){
+
   uint8_t color;
   if(bankValue < 4 && !checkArpHold()){
+
     useArpToggle(LOW);
-    arpAllOff();
+
+    //arpAllOff();
+
   }
     
+
   switch(bankValue){
     case 0:
+
+
        color = 1;
        miniScreenString(0,color,"Attack",HIGH);
        miniScreenString(1,color,"Decay",HIGH);
@@ -163,6 +170,7 @@ void screenLabelPotBank(){
        miniScreenString(5,color,"Waveform1>",HIGH);
        break;
     case 1:
+
        color = 1;
        miniScreenString(0,color,"F.Attack",HIGH);
        miniScreenString(1,color,"F.Decay",HIGH);
@@ -171,6 +179,7 @@ void screenLabelPotBank(){
        miniScreenString(5,color,"Waveform2>",HIGH);
        break;
     case 2:
+
        color = 1;
        miniScreenString(0,color,"M.Reson",HIGH);
        miniScreenString(1,color,"M.Cutoff",HIGH);
@@ -179,6 +188,7 @@ void screenLabelPotBank(){
        miniScreenString(5,color,"Max-Volume>",HIGH);
        break;
      case 3:
+
        color = 1;
        miniScreenString(0,color,"Delay-Len",HIGH);
        miniScreenString(1,color,"Del-Level",HIGH);
@@ -187,6 +197,7 @@ void screenLabelPotBank(){
        miniScreenString(5,color,"Semitones",HIGH);
        break;
      case 4:
+
        miniScreenString(0,color,"Arpeg-On!",HIGH);
        miniScreenString(1,color,"Variation",HIGH);
        if(checkArpHold())         //previous wrote miniScreenString(2,color,"HOLD",HIGH); but switching back to this bank should indicate state on/off
@@ -208,27 +219,30 @@ void  adcSimple(uint8_t potNum){
     bool midiMsg = false;
     const int oversample = 20;
     
+    //Serial.printf("6 1 %d\n", potNum);
     //read the pin multiple times
     for(int i=0;i<oversample;i++)      pinValue += analogRead(adcSimplePins[potNum]);         
       pinValue = pinValue / oversample;  //if wiring bug value inverted 4096-(pinValue / oversample); 
     if(adcSingleMin[potNum] > pinValue) adcSingleMin[potNum] = (pinValue+adcSingleMin[potNum])/2;
     if(adcSingleMax[potNum] < pinValue) adcSingleMax[potNum] = pinValue;
-    //Serial.println(pinValue);
+
     adcSingle[potNum] = float(pinValue)/4096.0f; //(pinValue/10)*10
 
+    //Serial.printf("6 2 %d\n", potNum);
     //This "noise reduction in the pot value so its not constantly changing was derived experimentally and needs more analysis
     
     delta = adcSingleAve[potNum] - adcSingle[potNum]; //floating point absolute get rid of signed
     error = 0.009f+(0.012f*(adcSingle[potNum]+0.1));  //previous weird idea error = 0.03*((adcSingle+0.25)*0.75); 
     
+    //Serial.printf("6 3 %d\n", potNum);
     //the idea is that if the delta adjustment is larger than the error we pick up significant control reading changes
     //instead of just sending minute voltage reading changes that could be noise and cause un-needed calls to code too often
     if (fabs(delta) > error ){
        if(adcSetpoint[potNum] != adcSingleAve[potNum]) //was there a change - if so then do stuff
         {
           adcSetpoint[potNum] = adcSingleAve[potNum];
-         // Serial.println("---ADC read: " + String(adcSetpoint[potNum])+"--min: "+String(adcSingleMin[potNum])+"--max: "+String(adcSingleMax[potNum]));
-         // Serial.print(" Param: "+String(potNum));
+
+          Serial.print(" Param: "+String(potNum));
           adcChannelValue[potNum] = adcSetpoint[potNum];
           //is the parameter setting for the bank within the range of parameter numbers handled by Synth_SetParam 0-13 #defined paramaters
           if(potBank[bankValue][potNum] < 14)
@@ -249,6 +263,8 @@ void  adcSimple(uint8_t potNum){
         } 
     
     }
+
+    //Serial.printf("6 4 %d\n", potNum);
     adcSingleAve[potNum] = (adcSingleAve[potNum]+adcSingle[potNum])/2;
     
 /*
@@ -436,7 +452,7 @@ void processButtons(){
          if (analogueParamSet < 0) analogueParamSet=7;
          if (analogueParamSet > 7) analogueParamSet=0;
          Serial.print("ParamSet: ");
-         Serial.println(analogueParamSet);
+
       }
     }
   } */
@@ -445,143 +461,4 @@ void processButtons(){
   //lastDownButtonState = readDownButton;
 
 }
-
-//not used - part of the original code
-void AdcMul_Init(void)
-{
-    for (int i = 0; i < ADC_INPUTS; i++)
-    {
-        adcChannelValue[i] = 0.5f;
-    }
-
-    memset(lastSendVal, 0xFF, sizeof(lastSendVal));
-
-    //analogReadResolution(10);
-    //analogSetAttenuation(ADC_11db);
-
- //   analogSetCycles(1);
- //   analogSetClockDiv(1);
-
- //  adcAttachPin(ADC_MUL_SIG_PIN);
-
-    pinMode(ADC_MUL_S0_PIN, OUTPUT);
-#if ADC_INPUTS > 2
-    pinMode(ADC_MUL_S1_PIN, OUTPUT);
-#endif
-#if ADC_INPUTS > 4
-    pinMode(ADC_MUL_S2_PIN, OUTPUT);
-#endif
-#if ADC_INPUTS > 8
-    pinMode(ADC_MUL_S3_PIN, OUTPUT);
-#endif
-}
-/*
-void AdcMul_Process(void)
-{
-    static float readAccu = 0;
-    static float adcMin = 0;//4000;
-    static float adcMax = 420453;//410000;
-
-    for (int j = 0; j < ADC_INPUTS; j++)
-    {
-        digitalWrite(ADC_MUL_S0_PIN, ((j & (1 << 0)) > 0) ? HIGH : LOW);
-#if ADC_INPUTS > 2
-        digitalWrite(ADC_MUL_S1_PIN, ((j & (1 << 1)) > 0) ? HIGH : LOW);
-#endif
-#if ADC_INPUTS > 4
-        digitalWrite(ADC_MUL_S2_PIN, ((j & (1 << 2)) > 0) ? HIGH : LOW);
-#endif
-#if ADC_INPUTS > 8
-        digitalWrite(ADC_MUL_S3_PIN, ((j & (1 << 3)) > 0) ? HIGH : LOW);
-#endif
-
-        // give some time for transition 
-        delay(1);
-
-        readAccu = 0;
-        adcStart(ADC_MUL_SIG_PIN);
-        for (int i = 0 ; i < ADC_OVERSAMPLING; i++)
-        {
-
-            if (adcBusy(ADC_MUL_SIG_PIN) == false)
-            {
-                readAccu += adcEnd(ADC_MUL_SIG_PIN);
-                adcStart(ADC_MUL_SIG_PIN);
-            }
-        }
-        adcEnd(ADC_MUL_SIG_PIN);
-
-#ifdef ADC_DYNAMIC_RANGE
-        if (readAccu < adcMin - 0.5f)
-        {
-            adcMin = readAccu + 0.5f;
-            Serial.printf("adcMin: %0.3f\n", readAccu);
-        }
-
-        if (readAccu > adcMax + 0.5f)
-        {
-            adcMax = readAccu - 0.5f;
-            Serial.printf("adcMax: %0.3f\n", readAccu);
-        }
-#endif
-
-        if (adcMax > adcMin)
-        {
-            //normalize value to range from 0.0 to 1.0
-             
-            float readValF = (readAccu - adcMin) / ((adcMax - adcMin));
-            readValF *= (1 + 2.0f * ADC_THRESHOLD); // extend to go over thresholds 
-            readValF -= ADC_THRESHOLD; // shift down to allow go under low threshold 
-
-            bool midiMsg = false;
-
-            // check if value has been changed 
-            if (readValF > adcChannelValue[j] + ADC_THRESHOLD)
-            {
-                adcChannelValue[j] = (readValF - ADC_THRESHOLD);
-                midiMsg = true;
-            }
-            if (readValF < adcChannelValue[j] - ADC_THRESHOLD)
-            {
-                adcChannelValue[j] = (readValF + ADC_THRESHOLD);
-                midiMsg = true;
-            }
-
-            // keep value in range from 0 to 1 
-            if (adcChannelValue[j] < 0.0f)
-            {
-                adcChannelValue[j] = 0.0f;
-            }
-            if (adcChannelValue[j] > 1.0f)
-            {
-                adcChannelValue[j] = 1.0f;
-            }
-
-            // MIDI adoption 
-            if (midiMsg)
-            {
-                uint32_t midiValueU7 = (adcChannelValue[j] * 127.999);
-                if (j < ADC_TO_MIDI_LOOKUP_SIZE)
-                {
-#ifdef ADC_INVERT
-                    uint8_t idx = (ADC_INPUTS - 1) - j;
-#else
-                    uint8_t idx = j;
-#endif
-                    if (lastSendVal[idx] != midiValueU7)
-                    {
-                        Midi_ControlChange(adcToMidiLookUp[idx].ch, adcToMidiLookUp[idx].cc, midiValueU7);
-                        lastSendVal[idx] = midiValueU7;
-                    }
-                }
-#ifdef ADC_DEBUG_CHANNEL0_DATA
-                switch (j == 0)
-                {
-                    float adcValFrac = (adcChannelValue[j] * 127.999) - midiValueU7;
-                    Serial.printf("adcChannelValue[j]: %f -> %0.3f -> %0.3f-> %d, %0.3f\n", readAccu, readValF, adcChannelValue[j], midiValueU7, adcValFrac);
-                }
-#endif
-            }
-        }
-    }
-} */
+ 
